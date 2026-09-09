@@ -126,7 +126,7 @@ PACKAGES="$PACKAGES luci-app-homeproxy"
 PACKAGES="$PACKAGES luci-app-openclash"
 PACKAGES="$PACKAGES luci-app-nikki"
 PACKAGES="$PACKAGES luci-app-package-manager"
-PACKAGES="$PACKAGES luci-app-passwall=26.6.2-r1"
+PACKAGES="$PACKAGES luci-app-passwall"
 PACKAGES="$PACKAGES luci-app-rtp2httpd"
 PACKAGES="$PACKAGES luci-app-samba4"
 PACKAGES="$PACKAGES luci-app-softethervpn"
@@ -167,7 +167,7 @@ PACKAGES="$PACKAGES luci-i18n-firewall-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-homeproxy-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-package-manager-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-nikki-zh-cn"
-PACKAGES="$PACKAGES luci-i18n-passwall-zh-cn=26.6.2"
+PACKAGES="$PACKAGES luci-i18n-passwall-zh-cn"
 PACKAGES="$PACKAGES luci-app-passwall2 luci-i18n-passwall2-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-rtp2httpd-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-samba4-zh-cn"
@@ -321,12 +321,10 @@ PACKAGES="$PACKAGES kmod-vmxnet3"
 PACKAGES="$PACKAGES kmod-wdt-sp805"
 PACKAGES="$PACKAGES kmod-xdp-sockets-diag"
 
-# ---- nikkii 生态 + passwall 离线包（内置，2026-09-01 由 Zo 下载到 packages/）----
+# ---- nikkii 生态 + passwall2 离线包（内置）----
 # nikkii 来源：https://nikkinikki.pages.dev/openwrt-25.12/aarch64_generic/nikki/
-# passwall 用 wukongdaily 离线包（26.6.2，自包含 11 个 apk，无 shadowsocks-rust 依赖）
-#   ——官方 feed 的 passwall 26.8.19 硬依赖 shadowsocks-rust-sslocal/ssserver，
-#     而官方 feed 25.12 无此包，装不上；离线包自包含可绕过
-# 本地 packages/ 仓库优先级最高，自动覆盖官方 feed 版本
+# passwall 用官方 feed（26.9.1，官方 feed 25.12.1 已含 shadowsocks-rust-sslocal/ssserver 依赖）
+# 全部 PACKAGES 用裸包名（严禁 =ver 钉死——会毒化 world 里后续所有包）
 NIKKI_FEED="https://nikkinikki.pages.dev/openwrt-25.12/aarch64_generic/nikki"
 mkdir -p /home/build/immortalwrt/packages
 for pkg in \
@@ -337,16 +335,6 @@ for pkg in \
   echo "⬇️  下载 nikkii 包: $pkg"
   wget -q "$NIKKI_FEED/$pkg" -O "/home/build/immortalwrt/packages/$pkg" || { echo "❌ 下载失败: $pkg"; exit 1; }
 done
-# passwall 离线包（wukongdaily/apk 仓库 run/arm64）
-echo "⬇️  下载 passwall 离线包"
-wget -q "https://raw.githubusercontent.com/wukongdaily/apk/master/run/arm64/25_PassWall_26.6.2_aarch64_generic.run" -O /tmp/passwall.run || { echo "❌ passwall 下载失败"; exit 1; }
-sh /tmp/passwall.run --target /tmp/pw-extract --noexec >/dev/null 2>&1
-find /tmp/pw-extract -name "*.apk" -exec cp {} /home/build/immortalwrt/packages/ \;
-# 删除官方 feed 的 passwall（26.8.19，硬依赖 shadowsocks-rust 而官方 feed 无此包，装不上）
-# apk 合并仓库按版本选，官方 26.8.19 会覆盖本地 26.6.2，必须删掉官方包只留本地
-find /home/build/immortalwrt/packages -maxdepth 1 -name 'luci-app-passwall-*.apk' ! -name 'luci-app-passwall-26.6.2-r1.apk' -delete
-ls -lah /home/build/immortalwrt/packages/
-
 # passwall2 离线包（wukongdaily/apk 仓库 run/arm64/passwall2，官方 feed 无 passwall2）
 # 依赖 geoview/xray-core/sing-box/hysteria/kmod-nft-socket/kmod-nft-tproxy 已在官方 PACKAGES 清单
 echo "⬇️  下载 passwall2 离线包"
