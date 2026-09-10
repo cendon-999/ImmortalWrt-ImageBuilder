@@ -94,7 +94,10 @@ jobs:
           echo "下载 ${luci_version} imagebuilder 包..."
           wget -q "https://downloads.immortalwrt.org/releases/${luci_version}/targets/armsr/armv8/immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64.tar.zst"
           tar --zstd -xf immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64.tar.zst
+          # 用 dotglob 移动所有文件（含隐藏文件 .config，否则 KERNEL_PATCHVER 为空报错）
+          shopt -s dotglob
           mv immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64/* .
+          shopt -u dotglob
           # 挂载配置和脚本（保留包自带 .config，避免 profile 检查失败）
           cp ${{ github.workspace }}/armsr-armv8/build25.sh build.sh
           cp -r ${{ github.workspace }}/shell shell
