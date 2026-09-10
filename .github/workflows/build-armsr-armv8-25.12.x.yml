@@ -1,10 +1,6 @@
 # 此工作流构建 ImmortalWrt 25.12.x armsr-armv8 (ARM64 通用虚拟机) 固件
-# 产出格式 qcow2 + vmdk，直接发 Release（img-installer 的 ISO 制作硬编码 x86_64，
-# 不支持 arm64，故不走 ISO 两阶段，改 qcow2 直发）
-# 参数结构照 Build 25.12.x ISO x86-64 工作流（luci 版本 / 空间大小 / docker / pppoe）
-# 软件组合与 192.168.0.10 (ImmortalWrt 25.12.1 arm64) 完全一致（246 官方包）
-# 使用方式：Actions 手动触发，选择 luci 版本 / 空间大小 / docker / pppoe 参数
-# 安装方式：qcow2 导入 ARM64 虚拟机（UTM / PVE / QEMU-KVM），vmdk 用于 VMware
+# 产出格式 qcow2 + vmdk，直接发 Release
+# 25.12.2 无 Docker 镜像，改用官方 imagebuilder 包下载构建（自包含，交叉编译 arm64）
 
 name: Build 25.12.x QEMU-armsr-armv8
 
@@ -90,47 +86,55 @@ jobs:
             echo "❎ 未启用 luci-app-store"
           fi
 
+      - name: ⬇️ 下载官方 imagebuilder 包
+        run: |
+          luci_version="${{ github.event.inputs.luci_version }}"
+          mkdir -p ${{ github.workspace }}/imagebuilder
+          cd ${{ github.workspace }}/imagebuilder
+          echo "下载 ${luci_version} imagebuilder 包..."
+          wget -q "https://downloads.immortalwrt.org/releases/${luci_version}/targets/armsr/armv8/immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64.tar.zst"
+          tar --zstd -xf immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64.tar.zst
+          mv immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64/* .
+          # 挂载配置和脚本
+          cp ${{ github.workspace }}/armsr-armv8/imm.config .config
+          cp ${{ github.workspace }}/armsr-armv8/build25.sh build.sh
+          cp -r ${{ github.workspace }}/shell shell
+          cp -r ${{ github.workspace }}/files files
+          mkdir -p files/etc/opkg
+          cp ${{ github.workspace }}/arch/arch.conf files/etc/opkg/arch.conf
+          echo "✅ imagebuilder 包就绪"
+
       - name: ✅ 正在构建ImmortalWrt固件25.12.x (armsr-armv8)
         run: |
           profile="${{ github.event.inputs.profile }}"
           case "$profile" in
-            1G)
-              ROOTFS_PARTSIZE=1024
-              ;;
-            2G)
-              ROOTFS_PARTSIZE=2048
-              ;;
-            3G)
-              ROOTFS_PARTSIZE=3072
-              ;;
-            4G)
-              ROOTFS_PARTSIZE=4096
-              ;;
+            1G) ROOTFS_PARTSIZE=1024 ;;
+            2G) ROOTFS_PARTSIZE=2048 ;;
+            3G) ROOTFS_PARTSIZE=3072 ;;
+            4G) ROOTFS_PARTSIZE=4096 ;;
           esac
           echo "ROOTFS_PARTSIZE=$ROOTFS_PARTSIZE" >> $GITHUB_ENV
           include_docker="${{ github.event.inputs.include_docker }}"
-          luci_version="${{ github.event.inputs.luci_version }}"
           echo "Building for rootfs_partsize: $profile"
-          docker run --rm -i \
-            --user root \
-            -v "${{ github.workspace }}/bin:/home/build/immortalwrt/bin" \
-            -v "${{ github.workspace }}/files/etc/uci-defaults:/home/build/immortalwrt/files/etc/uci-defaults" \
-            -v "${{ github.workspace }}/arch/arch.conf:/home/build/immortalwrt/files/etc/opkg/arch.conf" \
-            -v "${{ github.workspace }}/armsr-armv8/imm.config:/home/build/immortalwrt/.config" \
-            -v "${{ github.workspace }}/shell:/home/build/immortalwrt/shell" \
-            -v "${{ github.workspace }}/armsr-armv8/build25.sh:/home/build/immortalwrt/build.sh" \
-            -e PROFILE="generic" \
-            -e ROOTFS_PARTSIZE=$ROOTFS_PARTSIZE \
-            -e INCLUDE_DOCKER=$include_docker \
-            -e ENABLE_PPPOE=${{ inputs.enable_pppoe }} \
-            -e PPPOE_ACCOUNT=${{ inputs.pppoe_account }} \
-            -e PPPOE_PASSWORD=${{ inputs.pppoe_password }} \
-          immortalwrt/imagebuilder:armsr-armv8-openwrt-${luci_version} /bin/bash -c "mkdir -p /home/build/immortalwrt/scripts && touch /home/build/immortalwrt/scripts/opkg-key && chmod +x /home/build/immortalwrt/scripts/opkg-key && echo 'CONFIG_USE_APK=y' >> /home/build/immortalwrt/.config && sed -i '/block-readers\\|small-readers/d' /home/build/immortalwrt/include/image.mk && sed -i 's/--no-scripts/--no-scripts --allow-untrusted/' /home/build/immortalwrt/include/image.mk && /home/build/immortalwrt/build.sh"
+          cd ${{ github.workspace }}/imagebuilder
+          # 准备 opkg-key 和 apk 配置
+          mkdir -p scripts
+          touch scripts/opkg-key
+          chmod +x scripts/opkg-key
+          echo 'CONFIG_USE_APK=y' >> .config
+          sed -i '/block-readers\\|small-readers/d' include/image.mk
+          sed -i 's/--no-scripts/--no-scripts --allow-untrusted/' include/image.mk
+          # 执行构建
+          PROFILE="generic" ROOTFS_PARTSIZE=$ROOTFS_PARTSIZE INCLUDE_DOCKER=$include_docker \
+            ENABLE_PPPOE=${{ inputs.enable_pppoe }} \
+            PPPOE_ACCOUNT=${{ inputs.pppoe_account }} \
+            PPPOE_PASSWORD=${{ inputs.pppoe_password }} \
+            bash build.sh
 
       - name: ✅ 复制固件到根目录
         run: |
-          cp ${{ github.workspace }}/bin/targets/armsr/armv8/*.qcow2 ${{ github.workspace }}/
-          cp ${{ github.workspace }}/bin/targets/armsr/armv8/*.vmdk ${{ github.workspace }}/
+          cp ${{ github.workspace }}/imagebuilder/bin/targets/armsr/armv8/*.qcow2 ${{ github.workspace }}/
+          cp ${{ github.workspace }}/imagebuilder/bin/targets/armsr/armv8/*.vmdk ${{ github.workspace }}/
 
       - name: 🚀 上传固件到 Release
         uses: softprops/action-gh-release@v3
