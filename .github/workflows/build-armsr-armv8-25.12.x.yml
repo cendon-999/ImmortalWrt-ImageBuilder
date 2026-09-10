@@ -95,8 +95,7 @@ jobs:
           wget -q "https://downloads.immortalwrt.org/releases/${luci_version}/targets/armsr/armv8/immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64.tar.zst"
           tar --zstd -xf immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64.tar.zst
           mv immortalwrt-imagebuilder-${luci_version}-armsr-armv8.Linux-x86_64/* .
-          # 挂载配置和脚本
-          cp ${{ github.workspace }}/armsr-armv8/imm.config .config
+          # 挂载配置和脚本（保留包自带 .config，避免 profile 检查失败）
           cp ${{ github.workspace }}/armsr-armv8/build25.sh build.sh
           cp -r ${{ github.workspace }}/shell shell
           cp -r ${{ github.workspace }}/files files
