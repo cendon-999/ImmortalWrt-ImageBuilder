@@ -129,8 +129,6 @@ jobs:
           # 创建 /home/build/immortalwrt 软链接（build.sh 硬编码此路径）
           sudo mkdir -p /home/build
           sudo ln -sfn ${{ github.workspace }}/imagebuilder /home/build/immortalwrt
-          # 生成正确的 .config（修复 kernel 版本解析）
-          make defconfig
           # 执行构建
           PROFILE="generic" ROOTFS_PARTSIZE=$ROOTFS_PARTSIZE INCLUDE_DOCKER=$include_docker \
             ENABLE_PPPOE=${{ inputs.enable_pppoe }} \
