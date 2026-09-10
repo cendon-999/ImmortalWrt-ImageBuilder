@@ -106,6 +106,11 @@ jobs:
           cp ${{ github.workspace }}/arch/arch.conf files/etc/opkg/arch.conf
           echo "✅ imagebuilder 包就绪"
 
+      - name: 📦 安装 qemu-utils（生成 VMDK 镜像需要）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-utils
+
       - name: ✅ 正在构建ImmortalWrt固件25.12.x (armsr-armv8)
         run: |
           profile="${{ github.event.inputs.profile }}"
