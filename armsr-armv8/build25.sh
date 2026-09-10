@@ -111,6 +111,7 @@ PACKAGES="$PACKAGES xray-core"
 PACKAGES="$PACKAGES yq"
 PACKAGES="$PACKAGES zerotier"
 PACKAGES="$PACKAGES zlib"
+PACKAGES="$PACKAGES rtp2httpd"
 
 # ---- luci (38) ----
 PACKAGES="$PACKAGES luci-app-argon-config"
@@ -134,6 +135,7 @@ PACKAGES="$PACKAGES luci-app-vlmcsd"
 PACKAGES="$PACKAGES luci-app-vsftpd"
 PACKAGES="$PACKAGES luci-app-wol"
 PACKAGES="$PACKAGES luci-app-zerotier"
+PACKAGES="$PACKAGES luci-app-rtp2httpd"
 PACKAGES="$PACKAGES luci-base"
 PACKAGES="$PACKAGES luci-compat"
 PACKAGES="$PACKAGES luci-lib-base"
@@ -173,6 +175,7 @@ PACKAGES="$PACKAGES luci-i18n-ttyd-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-upnp-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-vlmcsd-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-vsftpd-zh-cn"
+PACKAGES="$PACKAGES luci-i18n-rtp2httpd-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-wol-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-zerotier-zh-cn"
 
@@ -339,6 +342,13 @@ mkdir -p /tmp/pw2-extract
 wget -q "https://raw.githubusercontent.com/wukongdaily/apk/master/run/arm64/passwall2/luci-app-passwall2-26.5.1-r1.apk" -O /home/build/immortalwrt/packages/luci-app-passwall2-26.5.1-r1.apk || { echo "❌ passwall2 app 下载失败"; exit 1; }
 wget -q "https://raw.githubusercontent.com/wukongdaily/apk/master/run/arm64/passwall2/luci-i18n-passwall2-zh-cn-26.5.1.apk" -O /home/build/immortalwrt/packages/luci-i18n-passwall2-zh-cn-26.5.1.apk || { echo "❌ passwall2 i18n 下载失败"; exit 1; }
 ls -lah /home/build/immortalwrt/packages/luci-app-passwall2* /home/build/immortalwrt/packages/luci-i18n-passwall2*
+# rtp2httpd 离线包（stackia/rtp2httpd 官方 release v3.17.0，官方 feed 无此包）
+echo "⬇️  下载 rtp2httpd 离线包 (v3.17.0)"
+RTP2HTTPD_RELEASE="https://github.com/stackia/rtp2httpd/releases/download/v3.17.0"
+wget -q "$RTP2HTTPD_RELEASE/rtp2httpd-3.17.0-r1_aarch64_generic.apk" -O /home/build/immortalwrt/packages/rtp2httpd-3.17.0-r1_aarch64_generic.apk || { echo "❌ rtp2httpd 下载失败"; exit 1; }
+wget -q "$RTP2HTTPD_RELEASE/luci-app-rtp2httpd-3.17.0-r1.apk" -O /home/build/immortalwrt/packages/luci-app-rtp2httpd-3.17.0-r1.apk || { echo "❌ luci-app-rtp2httpd 下载失败"; exit 1; }
+wget -q "$RTP2HTTPD_RELEASE/luci-i18n-rtp2httpd-zh-cn-3.17.0.apk" -O /home/build/immortalwrt/packages/luci-i18n-rtp2httpd-zh-cn-3.17.0.apk || { echo "❌ luci-i18n-rtp2httpd 下载失败"; exit 1; }
+ls -lah /home/build/immortalwrt/packages/rtp2httpd* /home/build/immortalwrt/packages/luci-app-rtp2httpd* /home/build/immortalwrt/packages/luci-i18n-rtp2httpd*
 
 # 判断是否需要编译 Docker 插件
 if [ "$INCLUDE_DOCKER" = "yes" ]; then
