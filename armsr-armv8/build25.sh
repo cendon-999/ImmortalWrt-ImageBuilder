@@ -342,7 +342,14 @@ mkdir -p /tmp/pw2-extract
 wget -q "https://raw.githubusercontent.com/wukongdaily/apk/master/run/arm64/passwall2/luci-app-passwall2-26.5.1-r1.apk" -O /home/build/immortalwrt/packages/luci-app-passwall2-26.5.1-r1.apk || { echo "❌ passwall2 app 下载失败"; exit 1; }
 wget -q "https://raw.githubusercontent.com/wukongdaily/apk/master/run/arm64/passwall2/luci-i18n-passwall2-zh-cn-26.5.1.apk" -O /home/build/immortalwrt/packages/luci-i18n-passwall2-zh-cn-26.5.1.apk || { echo "❌ passwall2 i18n 下载失败"; exit 1; }
 ls -lah /home/build/immortalwrt/packages/luci-app-passwall2* /home/build/immortalwrt/packages/luci-i18n-passwall2*
-# rtp2httpd 已加入 ImmortalWrt 官方源，直接用官方 feed 裸包名（PACKAGES 列表已含）
+# rtp2httpd 用 GitHub 官方 release v3.17.0（官方源是 3.16.0，落后）
+# 注意：apk 文件名必须无架构后缀（与 nikkii 一致），否则 apk mkndx 索引不识别
+echo "⬇️  下载 rtp2httpd v3.17.0 (GitHub)"
+RTP2HTTPD_RELEASE="https://github.com/stackia/rtp2httpd/releases/download/v3.17.0"
+wget -q "$RTP2HTTPD_RELEASE/rtp2httpd-3.17.0-r1_aarch64_generic.apk" -O /home/build/immortalwrt/packages/rtp2httpd-3.17.0-r1.apk || { echo "❌ rtp2httpd 下载失败"; exit 1; }
+wget -q "$RTP2HTTPD_RELEASE/luci-app-rtp2httpd-3.17.0-r1.apk" -O /home/build/immortalwrt/packages/luci-app-rtp2httpd-3.17.0-r1.apk || { echo "❌ luci-app-rtp2httpd 下载失败"; exit 1; }
+wget -q "$RTP2HTTPD_RELEASE/luci-i18n-rtp2httpd-zh-cn-3.17.0.apk" -O /home/build/immortalwrt/packages/luci-i18n-rtp2httpd-zh-cn-3.17.0.apk || { echo "❌ luci-i18n-rtp2httpd 下载失败"; exit 1; }
+ls -lah /home/build/immortalwrt/packages/rtp2httpd* /home/build/immortalwrt/packages/luci-app-rtp2httpd* /home/build/immortalwrt/packages/luci-i18n-rtp2httpd*
 
 # 判断是否需要编译 Docker 插件
 if [ "$INCLUDE_DOCKER" = "yes" ]; then
