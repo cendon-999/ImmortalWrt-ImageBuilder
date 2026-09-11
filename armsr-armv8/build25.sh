@@ -353,17 +353,16 @@ mkdir -p /tmp/rtp2httpd-luci
 wget -q "$RTP2HTTPD_RELEASE/luci-app-rtp2httpd-3.17.0-r1.apk" -O /tmp/rtp2httpd-luci/luci-app.apk || { echo "❌ luci-app-rtp2httpd 下载失败"; exit 1; }
 wget -q "$RTP2HTTPD_RELEASE/luci-i18n-rtp2httpd-zh-cn-3.17.0.apk" -O /tmp/rtp2httpd-luci/luci-i18n.apk || { echo "❌ luci-i18n-rtp2httpd 下载失败"; exit 1; }
 cd /tmp/rtp2httpd-luci
+APK_TOOL="/home/build/immortalwrt/staging_dir/host/bin/apk"
+[ -x "$APK_TOOL" ] || APK_TOOL="apk"
 for apkfile in luci-app.apk luci-i18n.apk; do
-  # 解压 apk（apk 是 tar 格式，可能带 zstd 压缩）
-  mkdir -p /tmp/apk-x
-  # 尝试直接 tar（apk 3.x 是 zstd 压缩的 tar）
-  if tar --zstd -xf "$apkfile" -C /tmp/apk-x 2>/dev/null || tar -xf "$apkfile" -C /tmp/apk-x 2>/dev/null ||      (apk extract --allow-untrusted "$apkfile" --destination /tmp/apk-x 2>/dev/null); then
-    echo "解压成功: $apkfile"
-  else
-    echo "❌ 解压失败: $apkfile"; exit 1
+  rm -rf /tmp/apk-x && mkdir -p /tmp/apk-x
+  if ! "$APK_TOOL" extract --allow-untrusted "$apkfile" --destination /tmp/apk-x 2>/dev/null; then
+    echo "❌ apk 解压失败: $apkfile ($APK_TOOL)"; exit 1
   fi
-  # 只复制真实文件到 files/，排除 apk 元数据
-  (cd /tmp/apk-x && find . -path './lib/apk' -prune -o -type f -print | while read -r f; do
+  echo "解压成功: $apkfile"
+  # 只复制真实文件（排除 lib/apk 元数据）到 files/
+  (cd /tmp/apk-x && find . -path "./lib/apk" -prune -o -type f -print | while read -r f; do
     mkdir -p "/home/build/immortalwrt/files/$(dirname "$f")"
     cp "$f" "/home/build/immortalwrt/files/$f"
   done)
