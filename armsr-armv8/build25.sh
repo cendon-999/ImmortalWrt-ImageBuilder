@@ -368,6 +368,7 @@ for apkfile in luci-app.apk luci-i18n.apk; do
   done)
   rm -rf /tmp/apk-x
 done
+cd /home/build/immortalwrt  # rtp2httpd luci 解压后切回 imagebuilder 目录
 echo "✅ rtp2httpd 3.17.0 全套（主程序 + luci + 中文包）已就绪"
 ls -lah /home/build/immortalwrt/packages/rtp2httpd*
 
